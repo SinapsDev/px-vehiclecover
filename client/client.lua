@@ -81,6 +81,23 @@ function Thread()
                                 end
                             end, cover.id)
                         elseif Config.Framework == "esx" then
+                            ESX.TriggerServerCallback("px-garages:uncoverVehicle", function(success)
+                                print('here', success)
+                                if success then
+                                    print('kandoz')
+                                    TriggerServerEvent("px-cover:removeCover", cover.id)
+                                    ESX.TriggerServerCallback("px-cover:spawnGarage", function(netId) 
+                                        print('hehere')
+                                        while not NetworkDoesNetworkIdExist(netId) do Wait(10) end
+                                        local veh = NetworkGetEntityFromNetworkId(netId)
+                                        TaskWarpPedIntoVehicle(PlayerPedId(), veh, -1)
+                                        SetVehicleEngineOn(veh, true, true, false)
+                                        SetVehicleOnGroundProperly(veh)
+                                    end, cover.plate, vector3(cover.coords.x, cover.coords.y, cover.coords.z), cover.heading)
+                                else
+                                    ESX.ShowNotification("You don't have enough money to uncover this vehicle.", "error")
+                                end
+                            end, cover.id)
                         end
                     end
                 else interval = 600 end
@@ -108,7 +125,21 @@ end
 --             end
 --         end)
 --     else
-        
+--         ESX.TriggerServerCallback("px-garages:getAllCovers", function(data)
+--             Covers = data
+--             for k,v in pairs(Covers) do
+--                 local coverProp = v.prop
+--                 local coords = vector3(v.coords.x, v.coords.y, v.coords.z)
+--                 local heading = v.heading
+--                 local obj = CreateObject(coverProp, coords.x, coords.y, coords.z, false, false, false)
+--                 SetEntityHeading(obj, heading)
+--                 PlaceObjectOnGroundProperly(obj)
+--                 SetEntityAlpha(obj, 205)
+--                 SetEntityCollision(obj, false, false)
+--                 SetEntityInvincible(obj, true)
+--                 v.obj = ObjToNet(obj)
+--             end
+--         end)
 --     end
 --     Thread()
 -- end)
@@ -130,10 +161,30 @@ AddEventHandler("QBCore:Client:OnPlayerLoaded", function()
                 v.obj = ObjToNet(obj)
             end
         end)
-    else
-        
+        Thread()
     end
-    Thread()
+end)
+
+-- esx on loaded
+AddEventHandler("esx:playerLoaded", function()
+    if Config.Framework == "esx" then
+        ESX.TriggerServerCallback("px-garages:getAllCovers", function(data)
+            Covers = data
+            for k,v in pairs(Covers) do
+                local coverProp = v.prop
+                local coords = vector3(v.coords.x, v.coords.y, v.coords.z)
+                local heading = v.heading
+                local obj = CreateObject(coverProp, coords.x, coords.y, coords.z, false, false, false)
+                SetEntityHeading(obj, heading)
+                PlaceObjectOnGroundProperly(obj)
+                SetEntityAlpha(obj, 205)
+                SetEntityCollision(obj, false, false)
+                SetEntityInvincible(obj, true)
+                v.obj = ObjToNet(obj)
+            end
+        end)
+        Thread()
+    end
 end)
 
 RegisterNetEvent("px-cover:addCover", function(id, cover)
@@ -152,7 +203,11 @@ end)
 
 RegisterNetEvent("px-cover:removeCover", function(id)
     local cover = Covers[id]
-    local closestObject, coords = QBCore.Functions.GetClosestObject(vector3(cover.coords.x, cover.coords.y, cover.coords.z))
+    if Config.Framework == "qb" then
+        closestObject, coords = QBCore.Functions.GetClosestObject(vector3(cover.coords.x, cover.coords.y, cover.coords.z))
+    else
+        closestObject, coords = ESX.Game.GetClosestObject(vector3(cover.coords.x, cover.coords.y, cover.coords.z))
+    end
     DeleteEntity(closestObject)
     Covers[id] = nil
 end)
@@ -179,16 +234,16 @@ RegisterNetEvent("px-cover:CoverVehicle", function(vehicle)
     end
 
     Wait(100)
-    if Config.Framework == "qb" then
-        if not HasModelLoaded(coverProp) then
-            RequestModel(coverProp)
-            while not HasModelLoaded(coverProp) do
-                Citizen.Wait(1)
-            end
+    if not HasModelLoaded(coverProp) then
+        RequestModel(coverProp)
+        while not HasModelLoaded(coverProp) do
+            Citizen.Wait(1)
         end
-        TriggerServerEvent("px-garages:saveCover", plate, coords, heading, coverProp, GetDisplayNameFromVehicleModel(GetEntityModel(vehicle)), GetHashKey(vehicle))
+    end
+    TriggerServerEvent("px-garages:saveCover", plate, coords, heading, coverProp, GetDisplayNameFromVehicleModel(GetEntityModel(vehicle)), GetHashKey(vehicle))
+    if Config.Framework == "qb" then
         QBCore.Functions.DeleteVehicle(vehicle)
     elseif Config.Framework == "esx" then
-        
+        ESX.Game.DeleteVehicle(vehicle)
     end
 end)

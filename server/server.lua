@@ -81,6 +81,70 @@ AddEventHandler('onResourceStart', function(resourceName)
             local isOwned = MySQL.scalar.await("SELECT owner FROM owned_vehicles WHERE plate = ? LIMIT 1", {plate})
             cb(isOwned == xPlayer.getIdentifier())
         end)
+
+        ESX.RegisterUsableItem('vehicle_cover', function(source)
+            local src = source
+            local xPlayer = ESX.GetPlayerFromId(src)
+            TriggerClientEvent("px-cover:CoverVehicle", src)
+            xPlayer.removeInventoryItem("vehicle_cover", 1)
+        end)
+        
+        ESX.RegisterServerCallback("px-garages:uncoverVehicle", function(source, cb, id)
+            if not Covers[id] then return end
+            local cover = Covers[id]
+            local uncoverPrice = math.ceil(Config.pricePerHour * (os.time() - cover.time) / 3600)
+            local xPlayer = ESX.GetPlayerFromId(source)
+            if Config.payForUncover then
+                if xPlayer.getMoney() >= uncoverPrice then
+                    xPlayer.removeMoney(uncoverPrice)
+                    cb(true)
+                else
+                    cb(false)
+                end
+            end
+            cb(true)
+        end)
+
+        ESX.RegisterServerCallback("px-garages:getAllCovers", function(source, cb)
+            cb(Covers)
+        end)
+
+        ESX.RegisterServerCallback("px-garage:getVehiclesStats", function(source, cb, plate)
+            local vehicle = MySQL.Sync.fetchAll("SELECT * FROM owned_vehicles WHERE plate = ?", {plate})
+            local data = vehicle[1]
+            local stats = {
+                fuel = data.fuel,
+                engine = data.engine,
+                body = data.body
+            }
+            cb({
+                stats = stats,
+                model = json.encode(vehicle).vehicle
+            })
+        end)
+
+        ESX.RegisterServerCallback("px-cover:spawnGarage", function(source, cb, plate, spawn, heading)
+            local source = source
+            local xPlayer  = ESX.GetPlayerFromId(source)
+            local vehicle = MySQL.update('UPDATE owned_vehicles SET `stored` = @stored WHERE `plate` = @plate AND `owner` = @identifier',
+            {
+                ['@plate'] 		= plate,
+                ['@stored']     = 1,
+            })
+    
+            MySQL.query('SELECT * FROM owned_vehicles WHERE `plate` = @plate AND `owner` = @identifier',
+            {
+                ['@plate'] 		= plate,
+                ['@identifier'] = xPlayer.identifier
+            }, function(result)
+                if result[1] then
+                    local data = result[1]
+                    ESX.OneSync.SpawnVehicle(json.decode(data.vehicle).model, spawn, heading, json.decode(data.vehicle), function(vehicle)
+                        cb(vehicle)
+                    end)
+                end
+            end)
+        end)
     end
 end)
 
@@ -127,6 +191,7 @@ RegisterNetEvent("px-cover:removeCover", function(id)
         local Player = QBCore.Functions.GetPlayer(source)
         Player.Functions.AddItem("vehicle_cover", 1, nil, nil)
     else
-
+        local xPlayer = ESX.GetPlayerFromId(source)
+        xPlayer.addInventoryItem("vehicle_cover", 1)
     end
 end)

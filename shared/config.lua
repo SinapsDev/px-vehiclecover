@@ -1,6 +1,6 @@
 Config = {}
 
-Config.Framework = "qb" -- "qb" or "esx"    
+Config.Framework = "esx" -- "qb" or "esx"    
 Config.oxKeys = false
 Config.payForUncover = true
 Config.pricePerHour = 100
