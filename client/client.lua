@@ -107,44 +107,7 @@ function Thread()
     end)
 end
 
--- Citizen.CreateThread(function()
---     if Config.Framework == "qb" then
---         QBCore.Functions.TriggerCallback("px-garages:getAllCovers", function(data)
---             Covers = data
---             for k,v in pairs(Covers) do
---                 local coverProp = v.prop
---                 local coords = vector3(v.coords.x, v.coords.y, v.coords.z)
---                 local heading = v.heading
---                 local obj = CreateObject(coverProp, coords.x, coords.y, coords.z, false, false, false)
---                 SetEntityHeading(obj, heading)
---                 PlaceObjectOnGroundProperly(obj)
---                 SetEntityAlpha(obj, 205)
---                 SetEntityCollision(obj, false, false)
---                 SetEntityInvincible(obj, true)
---                 v.obj = ObjToNet(obj)
---             end
---         end)
---     else
---         ESX.TriggerServerCallback("px-garages:getAllCovers", function(data)
---             Covers = data
---             for k,v in pairs(Covers) do
---                 local coverProp = v.prop
---                 local coords = vector3(v.coords.x, v.coords.y, v.coords.z)
---                 local heading = v.heading
---                 local obj = CreateObject(coverProp, coords.x, coords.y, coords.z, false, false, false)
---                 SetEntityHeading(obj, heading)
---                 PlaceObjectOnGroundProperly(obj)
---                 SetEntityAlpha(obj, 205)
---                 SetEntityCollision(obj, false, false)
---                 SetEntityInvincible(obj, true)
---                 v.obj = ObjToNet(obj)
---             end
---         end)
---     end
---     Thread()
--- end)
-
-AddEventHandler("QBCore:Client:OnPlayerLoaded", function()
+Citizen.CreateThread(function()
     if Config.Framework == "qb" then
         QBCore.Functions.TriggerCallback("px-garages:getAllCovers", function(data)
             Covers = data
@@ -161,13 +124,7 @@ AddEventHandler("QBCore:Client:OnPlayerLoaded", function()
                 v.obj = ObjToNet(obj)
             end
         end)
-        Thread()
-    end
-end)
-
--- esx on loaded
-AddEventHandler("esx:playerLoaded", function()
-    if Config.Framework == "esx" then
+    else
         ESX.TriggerServerCallback("px-garages:getAllCovers", function(data)
             Covers = data
             for k,v in pairs(Covers) do
@@ -183,9 +140,52 @@ AddEventHandler("esx:playerLoaded", function()
                 v.obj = ObjToNet(obj)
             end
         end)
-        Thread()
     end
+    Thread()
 end)
+
+-- AddEventHandler("QBCore:Client:OnPlayerLoaded", function()
+--     if Config.Framework == "qb" then
+--         QBCore.Functions.TriggerCallback("px-garages:getAllCovers", function(data)
+--             Covers = data
+--             for k,v in pairs(Covers) do
+--                 local coverProp = v.prop
+--                 local coords = vector3(v.coords.x, v.coords.y, v.coords.z)
+--                 local heading = v.heading
+--                 local obj = CreateObject(coverProp, coords.x, coords.y, coords.z, false, false, false)
+--                 SetEntityHeading(obj, heading)
+--                 PlaceObjectOnGroundProperly(obj)
+--                 SetEntityAlpha(obj, 205)
+--                 SetEntityCollision(obj, false, false)
+--                 SetEntityInvincible(obj, true)
+--                 v.obj = ObjToNet(obj)
+--             end
+--         end)
+--         Thread()
+--     end
+-- end)
+
+-- -- esx on loaded
+-- AddEventHandler("esx:playerLoaded", function()
+--     if Config.Framework == "esx" then
+--         ESX.TriggerServerCallback("px-garages:getAllCovers", function(data)
+--             Covers = data
+--             for k,v in pairs(Covers) do
+--                 local coverProp = v.prop
+--                 local coords = vector3(v.coords.x, v.coords.y, v.coords.z)
+--                 local heading = v.heading
+--                 local obj = CreateObject(coverProp, coords.x, coords.y, coords.z, false, false, false)
+--                 SetEntityHeading(obj, heading)
+--                 PlaceObjectOnGroundProperly(obj)
+--                 SetEntityAlpha(obj, 205)
+--                 SetEntityCollision(obj, false, false)
+--                 SetEntityInvincible(obj, true)
+--                 v.obj = ObjToNet(obj)
+--             end
+--         end)
+--         Thread()
+--     end
+-- end)
 
 RegisterNetEvent("px-cover:addCover", function(id, cover)
     Covers[id] = cover
