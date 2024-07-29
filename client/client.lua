@@ -222,7 +222,7 @@ RegisterNetEvent("px-cover:CoverVehicle", function(vehicle)
     local coverProp = GetHashKey(Config.CoversProps[vehicleClass])
     local coords = GetEntityCoords(vehicle)
     local heading = GetEntityHeading(vehicle)
-    local plate = vehicleProps.plate
+    local plate =  GetVehicleNumberPlateText(vehicle)
 
     if not Config.HasVehicleKeys(plate) then
         if Config.Framework == "qb" then
