@@ -76,10 +76,24 @@ AddEventHandler('onResourceStart', function(resourceName)
     elseif Config.Framework == "esx" then
         ESX = exports['es_extended']:getSharedObject()
         ESX.RegisterServerCallback("px-garages:isVehicleOwner", function(source, cb, plate)
-            local xPlayer = ESX.GetPlayerFromId(source)
-            if not xPlayer then return end
-            local isOwned = MySQL.scalar.await("SELECT owner FROM owned_vehicles WHERE plate = ? LIMIT 1", {plate})
-            cb(isOwned == xPlayer.getIdentifier())
+            if Config.oxKeys then
+                Inventory = exports.ox_inventory
+                local vehicleMetadata = {
+                    plate = plate,
+                }
+            
+                local keyItem = Inventory:GetItem(source, 'keys', vehicleMetadata, true)
+                if keyItem > 0 then
+                    loading = false
+                    cb(true)
+                end
+                cb(false)
+            else
+                local xPlayer = ESX.GetPlayerFromId(source)
+                if not xPlayer then return end
+                local isOwned = MySQL.scalar.await("SELECT owner FROM owned_vehicles WHERE plate = ? LIMIT 1", {plate})
+                cb(isOwned == xPlayer.getIdentifier())
+            end
         end)
 
         ESX.RegisterUsableItem('vehicle_cover', function(source)

@@ -57,25 +57,11 @@ Config.HasVehicleKeys = function(plate) -- Replace the code if you have a differ
             loading = false
             owned = data
         end, plate)
-    elseif Config.Framework == "esx" then
-        if Config.oxKeys then
-            Inventory = exports.ox_inventory
-            local vehicleMetadata = {
-                plate = plate,
-            }
-        
-            local keyItem = Inventory:GetItem(source, 'keys', vehicleMetadata, true)
-            if keyItem > 0 then
-                loading = false
-                return true
-            end
-            return false
-        else    
-            ESX.TriggerServerCallback('px-garages:isVehicleOwner', function(data)
-                owned = data
-                loading = false
-            end, plate)
-        end
+    elseif Config.Framework == "esx" then  
+        ESX.TriggerServerCallback('px-garages:isVehicleOwner', function(data)
+            owned = data
+            loading = false
+        end, plate)
     end
     while loading do Wait(300) end
     return owned
